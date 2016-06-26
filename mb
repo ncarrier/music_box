@@ -50,18 +50,12 @@ echo in > /sys/class/gpio/gpio${BLUE}/direction
 echo in > /sys/class/gpio/gpio${GREEN}/direction
 echo in > /sys/class/gpio/gpio${YELLOW}/direction
 
-base_dir="/home/pi/Music/Rusty Tea Makers - Show it to your Mother - 158273 --- Jamendo - MP3"
-songs[0]="${base_dir}/01 - Rusty Tea Makers - Mirror.mp3"
-songs[1]="${base_dir}/02 - Rusty Tea Makers - Summer.mp3"
-songs[2]="${base_dir}/03 - Rusty Tea Makers - Monkeys Jumping.mp3"
-songs[3]="${base_dir}/04 - Rusty Tea Makers - Lie in a Box.mp3"
-songs[4]="${base_dir}/05 - Rusty Tea Makers - Man in Dress.mp3"
-songs[5]="${base_dir}/06 - Rusty Tea Makers - I Need More.mp3"
-songs[6]="${base_dir}/07 - Rusty Tea Makers - Hello.mp3"
-songs[7]="${base_dir}/08 - Rusty Tea Makers - Show it to your Mother.mp3"
-
+# create musics db
+base_dir="/home/pi/music_box/music"
+songs=( $(find ${base_dir} -name '*.mp3' | sort) )
 current_song=0
-nb_songs=8
+nb_songs=${#songs[*]}
+
 pid=0
 period=.1 #100ms
 
@@ -92,7 +86,6 @@ function play_song { # name collision
 	echo "play ${songs[${current_song}]}"
 	play "${songs[${current_song}]}" > /dev/null 2>&1 &
 	pid=$!
-	echo ${pid}
 }
 
 while [ 1 ]; do
@@ -126,6 +119,14 @@ while [ 1 ]; do
 		if [ ${prev} = 1 ]; then
 			stop
 			prev
+			play_song
+		fi
+
+		# check if music is still playing, go to next song if not
+		if ! kill -0 ${pid}; then
+			echo "end of song"
+			pid=0
+			next
 			play_song
 		fi
 	fi
