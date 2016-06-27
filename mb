@@ -34,10 +34,10 @@ YELLOW=8
 [ -d /sys/class/gpio/gpio${NEXT} ] || echo ${NEXT} > /sys/class/gpio/export
 [ -d /sys/class/gpio/gpio${PREV} ] || echo ${PREV} > /sys/class/gpio/export
 
-echo out > /sys/class/gpio/gpio${PLAY}/direction
-echo out > /sys/class/gpio/gpio${STOP}/direction
-echo out > /sys/class/gpio/gpio${NEXT}/direction
-echo out > /sys/class/gpio/gpio${PREV}/direction
+echo in > /sys/class/gpio/gpio${PLAY}/direction
+echo in > /sys/class/gpio/gpio${STOP}/direction
+echo in > /sys/class/gpio/gpio${NEXT}/direction
+echo in > /sys/class/gpio/gpio${PREV}/direction
 
 # init leds
 [ -d /sys/class/gpio/gpio${RED} ] || echo ${RED} > /sys/class/gpio/export
@@ -45,10 +45,10 @@ echo out > /sys/class/gpio/gpio${PREV}/direction
 [ -d /sys/class/gpio/gpio${GREEN} ] || echo ${GREEN} > /sys/class/gpio/export
 [ -d /sys/class/gpio/gpio${YELLOW} ] || echo ${YELLOW} > /sys/class/gpio/export
 
-echo in > /sys/class/gpio/gpio${RED}/direction
-echo in > /sys/class/gpio/gpio${BLUE}/direction
-echo in > /sys/class/gpio/gpio${GREEN}/direction
-echo in > /sys/class/gpio/gpio${YELLOW}/direction
+echo out > /sys/class/gpio/gpio${RED}/direction
+echo out > /sys/class/gpio/gpio${BLUE}/direction
+echo out > /sys/class/gpio/gpio${GREEN}/direction
+echo out > /sys/class/gpio/gpio${YELLOW}/direction
 
 # create musics db
 base_dir="/home/pi/music_box/music"
@@ -102,25 +102,25 @@ while [ 1 ]; do
 	prev=$(cat /sys/class/gpio/gpio${PREV}/value)
 
 	if [ ${pid} = 0 ]; then
-		if [ ${play} = 1 ]; then
+		if [ ${play} = 0 ]; then
 			play_song
 		fi
-		if [ ${next} = 1 ]; then
+		if [ ${next} = 0 ]; then
 			next
 		fi
-		if [ ${prev} = 1 ]; then
+		if [ ${prev} = 0 ]; then
 			prev
 		fi
 	else
-		if [ ${stop} = 1 ]; then
+		if [ ${stop} = 0 ]; then
 			stop
 		fi
-		if [ ${next} = 1 ]; then
+		if [ ${next} = 0 ]; then
 			stop
 			next
 			play_song
 		fi
-		if [ ${prev} = 1 ]; then
+		if [ ${prev} = 0 ]; then
 			stop
 			prev
 			play_song
