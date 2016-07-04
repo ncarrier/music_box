@@ -88,9 +88,84 @@ function play_song { # name collision
 	pid=$!
 }
 
+function handle_leds {
+	if [ "${action}" = play ]; then
+		(
+			for i in 1 2 3; do
+				echo 1 > /sys/class/gpio/gpio${RED}/value
+				echo 1 > /sys/class/gpio/gpio${GREEN}/value
+				echo 1 > /sys/class/gpio/gpio${YELLOW}/value
+				sleep .1
+				echo 0 > /sys/class/gpio/gpio${RED}/value
+				echo 0 > /sys/class/gpio/gpio${GREEN}/value
+				echo 0 > /sys/class/gpio/gpio${YELLOW}/value
+				sleep .1
+			done
+		) &
+	elif [ "${action}" = stop ]; then
+		(
+			for i in 1 2 3 4 5; do
+				echo 1 > /sys/class/gpio/gpio${RED}/value
+				echo 1 > /sys/class/gpio/gpio${YELLOW}/value
+				echo 1 > /sys/class/gpio/gpio${GREEN}/value
+				echo 1 > /sys/class/gpio/gpio${BLUE}/value
+				sleep .03
+				echo 0 > /sys/class/gpio/gpio${RED}/value
+				echo 0 > /sys/class/gpio/gpio${YELLOW}/value
+				echo 0 > /sys/class/gpio/gpio${GREEN}/value
+				echo 0 > /sys/class/gpio/gpio${BLUE}/value
+				sleep .03
+			done
+		) &
+	elif [ "${action}" = next ]; then
+		(
+			echo 1 > /sys/class/gpio/gpio${RED}/value
+			echo 1 > /sys/class/gpio/gpio${GREEN}/value
+			for i in 1 2 3; do
+				echo 1 > /sys/class/gpio/gpio${YELLOW}/value
+				sleep .1
+				echo 0 > /sys/class/gpio/gpio${YELLOW}/value
+				sleep .1
+			done
+			echo 0 > /sys/class/gpio/gpio${RED}/value
+			echo 0 > /sys/class/gpio/gpio${GREEN}/value
+		) &
+	elif [ "${action}" = prev ]; then
+		(
+			echo 1 > /sys/class/gpio/gpio${RED}/value
+			echo 1 > /sys/class/gpio/gpio${GREEN}/value
+			for i in 1 2 3; do
+				echo 1 > /sys/class/gpio/gpio${BLUE}/value
+				sleep .1
+				echo 0 > /sys/class/gpio/gpio${BLUE}/value
+				sleep .1
+			done
+			echo 0 > /sys/class/gpio/gpio${RED}/value
+			echo 0 > /sys/class/gpio/gpio${GREEN}/value
+		) &
+	fi
+	action=none
+}
+
 echo "music box started"
 
-play /home/pi/music_box/startup.mp3 > /dev/null 2>&1
+play /home/pi/music_box/startup.mp3 > /dev/null 2>&1 &
+(
+	echo 1 > /sys/class/gpio/gpio${RED}/value
+	sleep .3
+	echo 0 > /sys/class/gpio/gpio${RED}/value
+	echo 1 > /sys/class/gpio/gpio${YELLOW}/value
+	sleep .3
+	echo 0 > /sys/class/gpio/gpio${YELLOW}/value
+	echo 1 > /sys/class/gpio/gpio${GREEN}/value
+	sleep .3
+	echo 0 > /sys/class/gpio/gpio${GREEN}/value
+	echo 1 > /sys/class/gpio/gpio${BLUE}/value
+	sleep .3
+	echo 0 > /sys/class/gpio/gpio${BLUE}/value
+) &
+
+action=none
 
 while [ 1 ]; do
 	sleep ${period}
@@ -104,26 +179,32 @@ while [ 1 ]; do
 	if [ ${pid} = 0 ]; then
 		if [ ${play} = 0 ]; then
 			play_song
+			action=play
 		fi
 		if [ ${next} = 0 ]; then
 			next
+			action=next
 		fi
 		if [ ${prev} = 0 ]; then
 			prev
+			action=prev
 		fi
 	else
 		if [ ${stop} = 0 ]; then
 			stop
+			action=stop
 		fi
 		if [ ${next} = 0 ]; then
 			stop
 			next
 			play_song
+			action=next
 		fi
 		if [ ${prev} = 0 ]; then
 			stop
 			prev
 			play_song
+			action=prev
 		fi
 
 		# check if music is still playing, go to next song if not
@@ -132,7 +213,12 @@ while [ 1 ]; do
 			pid=0
 			next
 			play_song
+			action=play
 		fi
+	fi
+
+	if [ "${action}" != none ]; then
+		handle_leds
 	fi
 done
 
