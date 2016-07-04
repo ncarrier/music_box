@@ -1,0 +1,11 @@
+[Unit]
+Description=Music box service
+After=tlp-init.service
+
+[Service]
+Type=simple
+RemainAfterExit=no
+ExecStart=/home/pi/mb
+
+[Install]
+WantedBy=multi-user.target
